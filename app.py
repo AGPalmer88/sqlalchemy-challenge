@@ -40,11 +40,17 @@ def home():
     """ List all routes that are available. """
     return (
         f"Welcome to Hawaii Climate Climate Analysis!<br/>"
+        f"<br/>"
         f"Let's Plan a Trip! Here are the Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations<br/>"
-        f"/api/v1.0/tobs<br/>"
+        f"<br/>"
+        f"<br/>"
+        f"Precipitation: /api/v1.0/precipitation<br/>"
+        f"List of Stations Data: /api/v1.0/stations<br/>"
+        f"The Dates & Temperature Observations: /api/v1.0/tobs<br/>"
+        f"List of Min, Avg, & Max Temperature for a given start date: /api/v1.0/2016-05-05<br/>"
+        f"List of Min, Avg, & Max Temperature for a given start and end date: /api/v1.0/2016-05-05/2016-05-11<br/>"
     )
+
 #####################################################################
 
 
@@ -125,24 +131,27 @@ def start_date(start):
     
     temps = list(np.ravel(temp_data))
     
-    return jsonify(temp_data)
+    session.close()
+    
+    return jsonify(temps)
 
-    #return jsonify({"error": "Please try another date range."}), 404
+    return jsonify({"error": "Please try another date range."}), 404
 
 #####################################################################    
 @app.route("/api/v1.0/<start>/<end>")
 def start_end_date(start, end):
     session = Session(engine)
     
-    sel = [func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)]
+    temp_data = session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+    filter(measurement.date >= start).filter(measurement.date <= end).all()
+        
+    temps = list(np.ravel(temp_data))
     
-    temp_data = session.query(*sel).filter(measurement.date >= start).filter(measurement.date <= end).all()
+    session.close()
     
-    #temps = list(np.ravel(temp_data))
+    return jsonify(temps)
     
-    return jsonify(temp_data)
-    
-    #return jsonify({"error": "Please try another date range."}), 404
+    return jsonify({"error": "Please try another date range."}), 404
 
     
 if __name__ == "__main__":

@@ -1,12 +1,9 @@
-###########################################
-# imports dependencies
-###########################################
 import numpy as np
 import pandas as pd
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
-from sqlalchemy import create_engine, inspect, func
+from sqlalchemy import create_engine, func
 
 from flask import Flask, jsonify
 
@@ -48,6 +45,7 @@ def home():
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
     )
+#####################################################################
 
 
 
@@ -60,7 +58,7 @@ def precipitation():
     last_year_date = dt.date(2017, 8, 23) - dt.timedelta(days=365)
     
     last_12_mnth_prcp = session.query(measurement.date, measurement.prcp).\
-    filter(measurement.date >= last_year_date).order_by(measurement.date.desc()).all()
+    filter(measurement.date >= last_year_date).order_by(measurement.date).all()
     
     
     #Return the JSON representation of your dictionary.
@@ -69,7 +67,7 @@ def precipitation():
 
     session.close()
 
-
+#####################################################################
 @app.route("/api/v1.0/stations")
 def stations():
     # Create our session (link) from Python to the DB
@@ -77,7 +75,8 @@ def stations():
 
     """Return a JSON list of stations from the dataset"""
     
-    results = session.query(station.station, station.name, station.latitude, station.latitude, station.longitude, station.elevation).\
+    results = session.query(station.name, measurement.station).\
+    filter(station.station == measurement.station).\
     group_by(station.station).all()
     
     
@@ -86,7 +85,8 @@ def stations():
     return jsonify(all_stations)
     
     session.close()
-
+    
+#####################################################################
 @app.route("/api/v1.0/tobs")
 def tobs():
     # Create our session (link) from Python to the DB
@@ -106,13 +106,44 @@ def tobs():
     filter(measurement.date>= last_year_date).all()
     
     list_TempObs = list(np.ravel(results)) 
+        
+    return jsonify(list_TempObs)
     
     session.close()
+
+#####################################################################
+
+@app.route("/api/v1.0/<start>")
+def start_date(start):
+    # Create our session (link) from Python to the DB
+    session = Session(engine)
+
+    """ Return `TMIN`, `TAVG`, and `TMAX` for start only, for all dates greater than and equal to the start date."""
     
-    return jsonify(list_TempObs)
+    temp_data = session.query(func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)).\
+    filter(measurement.date >= start).all()
+    
+    temps = list(np.ravel(temp_data))
+    
+    return jsonify(temp_data)
 
-#@app.route("api/v1.0/<start>")
-#@app.route("/api/v1.0/<start>/<end>`")
+    #return jsonify({"error": "Please try another date range."}), 404
 
+#####################################################################    
+@app.route("/api/v1.0/<start>/<end>")
+def start_end_date(start, end):
+    session = Session(engine)
+    
+    sel = [func.min(measurement.tobs), func.avg(measurement.tobs), func.max(measurement.tobs)]
+    
+    temp_data = session.query(*sel).filter(measurement.date >= start).filter(measurement.date <= end).all()
+    
+    #temps = list(np.ravel(temp_data))
+    
+    return jsonify(temp_data)
+    
+    #return jsonify({"error": "Please try another date range."}), 404
+
+    
 if __name__ == "__main__":
     app.run(debug=True)

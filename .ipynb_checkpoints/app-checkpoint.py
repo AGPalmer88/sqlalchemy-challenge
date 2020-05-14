@@ -39,16 +39,19 @@ app = Flask(__name__)
 def home():
     """ List all routes that are available. """
     return (
-        f"Welcome to Hawaii Climate Climate Analysis!<br/>"
+        f"Welcome to Hawaii Climate Analysis!<br/>"
         f"<br/>"
         f"Let's Plan a Trip! Here are the Available Routes:<br/>"
         f"<br/>"
+        f"Precipitation Data: /api/v1.0/precipitation<br/>"
         f"<br/>"
-        f"Precipitation: /api/v1.0/precipitation<br/>"
         f"List of Stations Data: /api/v1.0/stations<br/>"
+        f"<br/>"
         f"The Dates & Temperature Observations: /api/v1.0/tobs<br/>"
-        f"List of Min, Avg, & Max Temperature for a given start date: /api/v1.0/2016-05-05<br/>"
-        f"List of Min, Avg, & Max Temperature for a given start and end date: /api/v1.0/2016-05-05/2016-05-11<br/>"
+        f"<br/>"
+        f"List of Min, Avg, & Max Temperature for a given trip start date: /api/v1.0/start<br/>"
+        f"<br/>"
+        f"List of Min, Avg, & Max Temperature for a given trip start and end date: /api/v1.0/start/end<br/>"
     )
 
 #####################################################################
